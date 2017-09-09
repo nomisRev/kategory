@@ -32,6 +32,7 @@ class OptionTest : UnitSpec() {
         testLaws(MonadErrorLaws.laws(Option.monadError<Throwable>(OptionError), Eq.any(), EQ_EITHER))
         testLaws(TraverseLaws.laws(Option.traverse(), Option.monad(), ::Some, Eq.any()))
         testLaws(MonadFilterLaws.laws(Option.monadFilter(), ::Some, Eq.any()))
+        testLaws(MonadCombineLaws.laws(Option.monadCombine(), ::Some, { Some({ a: Int -> a * 2 }) }, Eq.any(), Eq.any()))
 
         "fromNullable should work for both null and non-null values of nullable types" {
             forAll { a: Int? ->
