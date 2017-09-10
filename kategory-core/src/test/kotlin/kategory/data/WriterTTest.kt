@@ -1,8 +1,6 @@
 package kategory
 
 import io.kotlintest.KTestJUnitRunner
-import kategory.laws.FunctorFilterLaws
-import kategory.laws.MonadFilterLaws
 import org.junit.runner.RunWith
 
 @RunWith(KTestJUnitRunner::class)
