@@ -1,7 +1,7 @@
 package kategory
 
 @higherkind
-@deriving(Monad::class, Traverse::class, MonoidK::class)
+@deriving(Monad::class, Traverse::class, MonoidK::class, MonadCombine::class)
 data class ListKW<out A> constructor(val list: List<A>) : ListKWKind<A>, List<A> by list {
 
     fun <B> flatMap(f: (A) -> ListKWKind<B>): ListKW<B> = this.ev().list.flatMap { f(it).ev().list }.k()
