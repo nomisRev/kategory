@@ -5,7 +5,8 @@ typealias StateTFunKind<F, S, A> = HK<F, StateTFun<F, S, A>>
 
 fun <F, S, A> StateTKind<F, S, A>.runM(initial: S): HK<F, Tuple2<S, A>> = (this as StateT<F, S, A>).run(initial)
 
-@higherkind class StateT<F, S, A>(
+@higherkind
+class StateT<F, S, A>(
         val MF: Monad<F>,
         val runF: StateTFunKind<F, S, A>
 ) : StateTKind<F, S, A> {
@@ -15,22 +16,38 @@ fun <F, S, A> StateTKind<F, S, A>.runM(initial: S): HK<F, Tuple2<S, A>> = (this 
 
         fun <F, S, A> invokeF(runF: StateTFunKind<F, S, A>, MF: Monad<F>): StateT<F, S, A> = StateT(MF, runF)
 
-        inline fun <reified F, S> instances(MF: Monad<F> = monad<F>()): StateTInstances<F, S> = object : StateTInstances<F, S> {
-            override fun MF(): Monad<F> = MF
+        fun <F, S, A> lift(fa: HK<F, A>, MF: Monad<F>): StateT<F, S, A> =
+                StateT(MF, MF.pure({ s -> MF.map(fa, { a -> Tuple2(s, a) }) }))
+
+        inline fun <reified F, S> functor(FF: Functor<F> = monad<F>()): StateTFunctor<F, S> = object : StateTFunctor<F, S> {
+            override fun FF(): Functor<F> = FF
         }
 
-        inline fun <reified F, S> functor(MF: Monad<F> = monad<F>()): StateTInstances<F, S> = instances(MF)
+        inline fun <reified F, S> applicative(MF: Monad<F> = monad<F>()): StateTApplicative<F, S> = object : StateTApplicative<F, S> {
+            override fun F(): Monad<F> = MF
+        }
 
-        inline fun <reified F, S> applicative(MF: Monad<F> = monad<F>()): StateTInstances<F, S> = instances(MF)
+        inline fun <reified F, S> monad(MF: Monad<F> = monad<F>()): StateTMonad<F, S> = object : StateTMonad<F, S> {
+            override fun F(): Monad<F> = MF
+        }
 
-        inline fun <reified F, S> monad(MF: Monad<F> = monad<F>()): StateTInstances<F, S> = instances(MF)
+        inline fun <reified F, reified S> monadState(MF: Monad<F> = monad<F>()): StateTMonadState<F, S> = object : StateTMonadState<F, S> {
+            override fun F(): Monad<F> = MF
+        }
 
-        inline fun <reified F, reified S> monadState(MF: Monad<F> = monad<F>()): StateTInstances<F, S> = instances(MF)
-
-        inline fun <reified F, S> semigroupK(F0: Monad<F> = monad<F>(), G0: SemigroupK<F> = semigroupK<F>()): SemigroupK<StateTKindPartial<F, S>> =
+        inline fun <reified F, S> semigroupK(MF: Monad<F> = monad<F>(), SGK: SemigroupK<F> = semigroupK<F>()): StateTSemigroupK<F, S> =
                 object : StateTSemigroupK<F, S> {
-                    override fun F(): Monad<F> = F0
-                    override fun G(): SemigroupK<F> = G0
+                    override fun F(): Monad<F> = MF
+                    override fun G(): SemigroupK<F> = SGK
+                }
+
+        inline fun <reified F, S> monadCombine(MCF: MonadCombine<F> = monadCombine<F>()): StateTMonadCombine<F, S> = object : StateTMonadCombine<F, S> {
+            override fun F(): MonadCombine<F> = MCF
+        }
+
+        inline fun <reified F, S, reified E> monadError(MEF: MonadError<F, E> = kategory.monadError<F, E>()): StateTMonadError<F, S, E> =
+                object : StateTMonadError<F, S, E> {
+                    override fun F(): MonadError<F, E> = MEF
                 }
     }
 
