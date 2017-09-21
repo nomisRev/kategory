@@ -1,6 +1,7 @@
 package kategory.optics
 
 import kategory.Either
+import kategory.Monoid
 import kategory.Option
 import kategory.Tuple2
 import kategory.compose
@@ -45,8 +46,8 @@ abstract class Getter<S, A> {
      * Find if the target satisfies the predicate.
      */
     inline fun find(a: S, crossinline p: (A) -> Boolean): Option<A> = get(a).let { b ->
-            if (p(b)) b.some() else none()
-        }
+        if (p(b)) b.some() else none()
+    }
 
     /**
      * Check if the target satisfies the predicate
@@ -95,20 +96,24 @@ abstract class Getter<S, A> {
     /**
      * Compose a [Getter] with a [Lens]
      */
-    infix fun <C> composeLens(other: Lens<A,C>): Getter<S,C> = Getter(other::get compose this::get)
+    infix fun <C> composeLens(other: Lens<A, C>): Getter<S, C> = Getter(other::get compose this::get)
 
     /**
      * Compose a [Getter] with a [Iso]
      */
-    infix fun <C> composeIso(other: Iso<A,C>): Getter<S,C> = Getter(other::get compose this::get)
+    infix fun <C> composeIso(other: Iso<A, C>): Getter<S, C> = Getter(other::get compose this::get)
 
     /**
      * Plus operator overload to compose optionals
      */
     operator fun <C> plus(other: Getter<A, C>): Getter<S, C> = composeGetter(other)
 
-    operator fun <C> plus(other: Lens<A,C>): Getter<S, C> = composeLens(other)
+    operator fun <C> plus(other: Lens<A, C>): Getter<S, C> = composeLens(other)
 
-    operator fun <C> plus(other: Iso<A,C>): Getter<S, C> = composeIso(other)
+    operator fun <C> plus(other: Iso<A, C>): Getter<S, C> = composeIso(other)
+
+    fun asFold(): Fold<S, A> = object : Fold<S, A>() {
+        override fun <R> foldMap(M: Monoid<R>, a: S, f: (A) -> R): R = f(get(a))
+    }
 
 }
