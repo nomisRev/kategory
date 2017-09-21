@@ -13,18 +13,26 @@ import kategory.right
 import kategory.some
 import kategory.toT
 
+/**
+ * [Optional] is a type alias for [POptional] which fixes the type arguments
+ * and restricts the [POptional] to monomorphic updates.
+ */
 typealias Optional<S, A> = POptional<S, S, A, A>
 
 /**
- * A [POptional] can be seen as a pair of functions `getOption: (A) -> Option<B>` and `set: (B) -> (A) -> A`
+ * An [Optional] is an optic that allows to see into a structure and getting, setting or modifying an optional target.
  *
- * An [POptional] can also be defined as a weaker [PLens] and [PPrism]
+ * A (polymorphic) [POptional] is useful when setting or modifying a value for a type with a optional polymorphic target
+ * i.e. POptional<Ior<Int, Double>, Ior<String, Double>, Int, String>
  *
- * @param A the source of a [POptional]
- * @param B the target of a [POptional]
- * @property getOption from an `A` we can extract a `Option<B>`
- * @property set replace the target value by `B` in an `A` so we obtain another modified `A`
- * @constructor Creates a Lens of type `A` with target `B`.
+ * A [POptional] can be seen as a weaker [Lens] and [Prism] and combines their weakest functions:
+ * - `set: (S, B) -> T` meaning we can look into an `S` and set a value `B` for a target `A` and obtain a modified source `T`
+ * - `getOrModify: (S) -> Either<T, A>` meaning we can get the target OR return the original value
+ *
+ * @param S the source of a [POptional]
+ * @param T the modified source of a [POptional]
+ * @param A the target of a [POptional]
+ * @param B the modified target of a [POptional]
  */
 abstract class POptional<S, T, A, B> {
 
@@ -50,6 +58,10 @@ abstract class POptional<S, T, A, B> {
                 { a -> { aa -> aa.bimap({ a }, { a }) } }
         )
 
+        /**
+         * Invoke operator overload to create a [POptional] of type `S` with target `A`.
+         * Can also be used to construct [Optional]
+         */
         operator fun <S, T, A, B> invoke(getOrModify: (S) -> Either<T, A>, set: (B) -> (S) -> T): POptional<S, T, A, B> = object : POptional<S, T, A, B>() {
             override fun getOrModify(s: S): Either<T, A> = getOrModify(s)
 

@@ -7,7 +7,7 @@ import kategory.functor
 
 /**
  * [Setter] is a type alias for [PSetter] which fixes the type arguments
- * and restricts the Setter to monomorphic updates.
+ * and restricts the [PSetter] to monomorphic updates.
  */
 typealias Setter<S, A> = PSetter<S, S, A, A>
 
@@ -45,7 +45,8 @@ abstract class PSetter<S, T, A, B> {
         fun <A> codiagonal(): Setter<Either<A, A>, A> = Setter { f -> { aa -> aa.bimap(f, f) } }
 
         /**
-         * Create a [PSetter] using modify function
+         * Invoke operator overload to create a [PSetter] of type `S` with target `A`.
+         * Can also be used to construct [Setter]
          */
         operator fun <S, T, A, B> invoke(modify: ((A) -> B) -> (S) -> T): PSetter<S, T, A, B> = object : PSetter<S, T, A, B>() {
             override fun modify(s: S, f: (A) -> B): T = modify(f)(s)

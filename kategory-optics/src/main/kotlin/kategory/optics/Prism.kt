@@ -5,32 +5,41 @@ import kategory.Either
 import kategory.Eq
 import kategory.HK
 import kategory.Option
+import kategory.PartialFunction
 import kategory.Tuple2
 import kategory.compose
 import kategory.eq
 import kategory.flatMap
 import kategory.identity
 import kategory.left
+import kategory.lift
 import kategory.none
 import kategory.right
 import kategory.some
 import kategory.toT
 
+/**
+ * [Prism] is a type alias for [PPrism] which fixes the type arguments
+ * and restricts the [PPrism] to monomorphic updates.
+ */
 typealias Prism<S, A> = PPrism<S, S, A, A>
 
 /**
- * A [PPrism] can be seen as a pair of functions: `reverseGet : B -> A` and `getOrModify: A -> Either<A,B>`
+ * A [Prism] is a lossless invertible optic that can look into a structure and reach either no targets or exactly one target.
+ * i.e. generalization of finding a target in a sum type (sealed class) Prism<SumType, SumType.SubType>
+ * or safe casting Prism<Double, Int>.
  *
- * - `reverseGet : B -> A` get the source type of a [PPrism]
- * - `getOrModify: A -> Either<A,B>` get the target of a [PPrism] or return the original value
+ * A (polymorphic) [PPrism] is useful when setting or modifying a value for a polymorphic sum type
+ * i.e. PPrism<Try<Sting>, Try<Int>, String, Int>
  *
- * It encodes the relation between a Sum or CoProduct type (sealed class) and one of its element.
+ * A [PPrism] gathers the two concepts of pattern matching and constructor and thus can be seen as a pair of functions:
+ * - `getOrModify: A -> Either<A, B>` meaning we can get the target of a [PPrism] OR return the original value
+ * - `reverseGet : B -> A` meaning we can construct the source type of a [PPrism] from a `B`
  *
- * @param A the source of a [PPrism]
- * @param B the target of a [PPrism]
- * @property getOrModify from an `B` we can produce an `A`
- * @property reverseGet get the target of a [PPrism] or return the original value
- * @constructor Creates a Lens of type `A` with target `B`
+ * @param S the source of a [PPrism]
+ * @param T the modified source of a [PPrism]
+ * @param A the target of a [PPrism]
+ * @param B the modified target of a [PPrism]
  */
 abstract class PPrism<S, T, A, B> {
 
@@ -41,6 +50,10 @@ abstract class PPrism<S, T, A, B> {
 
         fun <A> id() = Iso.id<A>().asPrism()
 
+        /**
+         * Invoke operator overload to create a [PPrism] of type `S` with target `A`.
+         * Can also be used to construct [Prism]
+         */
         operator fun <S, T, A, B> invoke(getOrModify: (S) -> Either<T, A>, reverseGet: (B) -> T) = object : PPrism<S, T, A, B>() {
             override fun getOrModify(s: S): Either<T, A> = getOrModify(s)
 
@@ -48,7 +61,7 @@ abstract class PPrism<S, T, A, B> {
         }
 
         /**
-         * a [PPrism] that checks for equality with a given value
+         * A [PPrism] that checks for equality with a given value
          */
         inline fun <reified A> only(a: A, EQA: Eq<A> = eq()): Prism<A, Unit> = Prism(
                 getOrModify = { a2 -> (if (EQA.eqv(a, a2)) a.left() else Unit.right()) },
@@ -174,7 +187,7 @@ abstract class PPrism<S, T, A, B> {
     /**
      * View a [PPrism] as a [PSetter]
      */
-    fun asSetter(): PSetter<S, T, A, B> = PSetter { f -> { s -> modify(s,f) } }
+    fun asSetter(): PSetter<S, T, A, B> = PSetter { f -> { s -> modify(s, f) } }
 
 }
 

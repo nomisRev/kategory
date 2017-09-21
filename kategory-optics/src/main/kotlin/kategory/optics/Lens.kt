@@ -12,18 +12,27 @@ import kategory.right
 import kategory.some
 import kategory.toT
 
+/**
+ * [Lens] is a type alias for [PLens] which fixes the type arguments
+ * and restricts the [PLens] to monomorphic updates.
+ */
 typealias Lens<S, A> = PLens<S, S, A, A>
 
 /**
- * A [PLens] can be seen as a pair of functions `get: (A) -> B` and `set: (B) -> (A) -> A`
- * - `get: (A) -> B` i.e. from an `A`, we can extract an `B`
- * - `set: (B) -> (A) -> A` i.e. if we replace target value by `B` in an `A`, we obtain another modified `A`
+ * A [Lens] (or Functional Reference) is an optic that allows to see into a structure and
+ * getting, setting or modifying the target.
  *
- * @param A the source of a [PLens]
- * @param B the target of a [PLens]
- * @property get from an `A` we can extract a `B`
- * @property set replace the target value by `B` in an `A` so we obtain another modified `A`
- * @constructor Creates a Lens of type `A` with target `B`.
+ * A (polymorphic) [PLens] is useful when setting or modifying a value for a constructed type
+ * i.e. PLens<Tuple2<Double, Int>, Tuple2<String, Int>, Double, String>
+ *
+ * A [PLens] can be seen as a pair of functions:
+ * - `get: (S) -> A` meaning we can look into an `S` and extract an `A`
+ * - `set: (B) -> (S) -> T` meaning we can look into an `S` and set a value `B` for a target `A` and obtain a modified source `T`
+ *
+ * @param S the source of a [PLens]
+ * @param T the modified source of a [PLens]
+ * @param A the target of a [PLens]
+ * @param B the modified target of a [PLens]
  */
 abstract class PLens<S, T, A, B> {
 
@@ -42,6 +51,10 @@ abstract class PLens<S, T, A, B> {
                 set = { a -> { it.bimap({ a }, { a }) } }
         )
 
+        /**
+         * Invoke operator overload to create a [PLens] of type `S` with target `A`.
+         * Can also be used to construct [Lens]
+         */
         operator fun <S, T, A, B> invoke(get: (S) -> A, set: (B) -> (S) -> T) = object : PLens<S, T, A, B>() {
             override fun get(s: S): A = get(s)
 
